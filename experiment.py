@@ -1,4 +1,4 @@
-import pandas as pd
+import pandas as pd, numpy as np
 import time
 import logging, argparse, os
 import itertools
@@ -37,9 +37,11 @@ def run_multiple_experiments(experiments, run, result_handler, on_progress=None)
 
 
 def as_list(x):
-    try:
+    if isinstance(x, list):
+        return x
+    elif isinstance(x, np.ndarray):
         return list(x)
-    except TypeError:
+    else:
         return [x]
 
 class Task():

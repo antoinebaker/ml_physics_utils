@@ -10,7 +10,7 @@ def task_runner(tasks):
     parser = argparse.ArgumentParser(description="run tasks")
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
-        "-t", "--task", help="task to run", choices=tasks.keys()
+        "--task", help="task to run", choices=tasks.keys()
     )
     group.add_argument(
         "-a", "--all", help="run all tasks",action="store_true"

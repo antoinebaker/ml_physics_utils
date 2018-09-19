@@ -1,6 +1,7 @@
-import pandas as pd, numpy as np
+import pandas as pd
+import numpy as np
 import time
-import logging, argparse, os
+import logging
 import itertools
 from .connection import TableResultHandler
 
@@ -44,6 +45,7 @@ def as_list(x):
     else:
         return [x]
 
+
 class Task():
     def __init__(self, run_experiment, **kwargs):
         self.run_experiment = run_experiment
@@ -79,27 +81,6 @@ class TableTask(Task):
         )
         super().run(result_handler, on_progress)
 
-def task_runner(tasks, log_dir):
-    LOG_LEVELS = {
-        "DEBUG": logging.DEBUG, "INFO": logging.INFO, "ERROR": logging.ERROR
-    }
-    # parse cmd line arguments
-    parser = argparse.ArgumentParser()
-    parser.add_argument("task", help="task to run", choices=tasks.keys())
-    parser.add_argument(
-        "--log", default="INFO", dest="log_level", help="logging level",
-        choices=LOG_LEVELS.keys()
-    )
-    args = parser.parse_args()
-    # set logging
-    logging.basicConfig(
-        filename=os.path.join(log_dir, f"{args.task}.log"),
-        format='%(asctime)s : %(levelname)s : %(message)s',
-        level=LOG_LEVELS[args.log_level]
-    )
-    # run task
-    task = tasks[args.task]
-    task.run()
 
 def teacher_student_scenario(n_samples, teacher, student, return_all=False):
     """Run teacher-student scenario."""

@@ -1,6 +1,25 @@
 import argparse
 import logging
 import os
+import sys
+
+def configure_logging(log_level, log_dir, task_name, batch):
+    batch_str = "full_batch" if batch is None else str(batch)
+    logging.basicConfig(
+        filename=os.path.join(log_dir, f"{task_name}.{batch_str}.log"),
+        format='%(asctime)s : %(levelname)s : %(message)s',
+        level=log_level
+    )
+
+def run_task(task_name, task, batch, n_batch):
+    logging.info(f"Running task {task_name}")
+    if batch is None:
+        logging.info(f"Running full batch")
+        task.run()
+    else:
+        logging.info(f"Running batch {batch}/{n_batch}")
+        task.run_batch(batch, n_batch)
+
 
 def task_runner(tasks):
     LOG_LEVELS = {
@@ -8,7 +27,7 @@ def task_runner(tasks):
     }
     # parse cmd line arguments
     parser = argparse.ArgumentParser(description="run tasks")
-    group = parser.add_mutually_exclusive_group()
+    group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument(
         "--task", help="task to run", choices=tasks.keys()
     )
@@ -22,29 +41,33 @@ def task_runner(tasks):
     parser.add_argument(
         "--log_dir", default="logs", help="logs directory"
     )
+    parser.add_argument(
+        "--batch", type=int, help="batch in range(n_batch)"
+    )
+    parser.add_argument(
+        "--n_batch", type=int, help="number of batches"
+    )
     args = parser.parse_args()
-    if args.task:
-        # set logging
-        logging.basicConfig(
-            filename=os.path.join(args.log_dir, f"{args.task}.log"),
-            format='%(asctime)s : %(levelname)s : %(message)s',
-            level=LOG_LEVELS[args.log_level]
-        )
+    log_level = LOG_LEVELS[args.log_level]
+    log_dir, task_name = args.log_dir, args.task
+    batch, n_batch = args.batch, args.n_batch
+    # check that batch arguments are consistent
+    if batch is not None:
+        if n_batch is None:
+            sys.exit("you must provide n_batch")
+        if (batch not in range(n_batch)):
+            sys.exit("batch must be in range(n_batch)")
+    if task_name:
+        configure_logging(log_level, log_dir, task_name, batch)
         # run chosen task
-        task = tasks[args.task]
-        task.run()
+        task = tasks[task_name]
+        run_task(task_name, task, batch, n_batch)
         return
     elif args.all:
-        # set logging
-        logging.basicConfig(
-            filename=os.path.join(args.log_dir, f"all_tasks.log"),
-            format='%(asctime)s : %(levelname)s : %(message)s',
-            level=LOG_LEVELS[args.log_level]
-        )
+        configure_logging(log_level, log_dir, "all_tasks", batch)
         # run all tasks
         for task_name, task in tasks.items():
-            logging.info(f"Running {task_name}")
-            task.run()
+            run_task(task_name, task, batch, n_batch)
         return
     else:
         print("Nothing to run")

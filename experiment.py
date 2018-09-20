@@ -7,7 +7,7 @@ from .connection import TableResultHandler
 
 
 def log_on_progress(i, total):
-    logging.debug(f"experiment {i}/{total}")
+    logging.info(f"experiment {i}/{total}")
 
 
 class DataFrameResultHandler():
@@ -46,10 +46,29 @@ def as_list(x):
         return [x]
 
 
+def get_batch_positions(n_total, n_batch):
+    """Return the batch positions when dividing n_total in n_batch."""
+    if (n_batch < 1):
+        raise ValueError("n_batch must be greater than 1")
+    if (n_batch > n_total):
+        raise ValueError("n_batch must be less than n_total")
+    # n_total = q*n_batch + r = r*(q+1) + (n_batch-r)*q
+    q, r = divmod(n_total, n_batch)
+    # r batches of size q+1 and (n_batch-r) batches of size q
+    batch_sizes = r * [q + 1] + (n_batch - r) * [q]
+    batch_end, batch_positions = 0, []
+    for batch_size in batch_sizes:
+        batch_start = batch_end
+        batch_end = batch_start + batch_size
+        batch_positions.append((batch_start, batch_end))
+    return batch_positions
+
+
 class Task():
     def __init__(self, run_experiment, **kwargs):
         self.run_experiment = run_experiment
         self.kwargs = kwargs
+        self.experiments = None
 
     def _experiments(self):
         kwargs = {key: as_list(val) for key, val in self.kwargs.items()}
@@ -58,16 +77,31 @@ class Task():
             for record_values in itertools.product(*kwargs.values())
         ]
 
-    def run(self, result_handler, on_progress=None):
-        self._experiments()
-        fname, nb = self.run_experiment.__name__, len(self.experiments)
+    def _run(self, experiments, result_handler, on_progress):
+        fname, nb = self.run_experiment.__name__, len(experiments)
         logging.info(f"Running {fname} on {nb} experiments")
         start = time.time()
         run_multiple_experiments(
-            self.experiments, self.run_experiment, result_handler, on_progress
+            experiments, self.run_experiment, result_handler, on_progress
         )
         elapsed_time = time.time() - start
         logging.info(f"Task done in {elapsed_time:.1f}s")
+
+    def run(self, result_handler, on_progress):
+        if not self.experiments:
+            self._experiments()
+        self._run(self.experiments, result_handler, on_progress)
+
+    def run_batch(self, batch, n_batch, result_handler, on_progress):
+        if (batch not in range(n_batch)):
+            raise ValueError(f"batch={batch} not in range(n_batch={n_batch})")
+        if not self.experiments:
+            self._experiments()
+        batch_positions = get_batch_positions(len(self.experiments), n_batch)
+        batch_start, batch_end = batch_positions[batch]
+        batch_experiments = self.experiments[batch_start:batch_end]
+        logging.info(f"Batch start={batch_start} end={batch_end}")
+        self._run(batch_experiments, result_handler, on_progress)
 
 
 class TableTask(Task):
@@ -76,10 +110,12 @@ class TableTask(Task):
         self.table_name = table_name
 
     def run(self, on_progress=None):
-        result_handler = TableResultHandler(
-            self.table_name, overwrite=False
-        )
+        result_handler = TableResultHandler(self.table_name)
         super().run(result_handler, on_progress)
+
+    def run_batch(self, batch, n_batch, on_progress=None):
+        result_handler = TableResultHandler(self.table_name)
+        super().run_batch(batch, n_batch, result_handler, on_progress)
 
 
 def teacher_student_scenario(n_samples, teacher, student, return_all=False):

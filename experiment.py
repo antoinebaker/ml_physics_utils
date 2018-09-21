@@ -93,14 +93,15 @@ class Task():
         self._run(self.experiments, result_handler, on_progress)
 
     def run_batch(self, batch, n_batch, result_handler, on_progress):
-        if (batch not in range(n_batch)):
-            raise ValueError(f"batch={batch} not in range(n_batch={n_batch})")
+        if (batch not in range(1, n_batch+1)):
+            raise ValueError(f"batch={batch} not in 1..{n_batch}")
         if not self.experiments:
             self._experiments()
-        batch_positions = get_batch_positions(len(self.experiments), n_batch)
-        batch_start, batch_end = batch_positions[batch]
+        n_total = len(self.experiments)
+        batch_positions = get_batch_positions(n_total, n_batch)
+        batch_start, batch_end = batch_positions[batch-1]
         batch_experiments = self.experiments[batch_start:batch_end]
-        logging.info(f"Batch start={batch_start} end={batch_end}")
+        logging.info(f"Experiments [{batch_start+1}..{batch_end}]/{n_total}")
         self._run(batch_experiments, result_handler, on_progress)
 
 

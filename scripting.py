@@ -42,7 +42,7 @@ def task_runner(tasks):
         "--log_dir", default="logs", help="logs directory"
     )
     parser.add_argument(
-        "--batch", type=int, help="batch in range(n_batch)"
+        "--batch", type=int, help="batch in 1..n_batch"
     )
     parser.add_argument(
         "--n_batch", type=int, help="number of batches"
@@ -55,8 +55,8 @@ def task_runner(tasks):
     if batch is not None:
         if n_batch is None:
             sys.exit("you must provide n_batch")
-        if (batch not in range(n_batch)):
-            sys.exit("batch must be in range(n_batch)")
+        if (batch not in range(1, n_batch+1)):
+            sys.exit("batch must be in 1..n_batch")
     if task_name:
         configure_logging(log_level, log_dir, task_name, batch)
         # run chosen task

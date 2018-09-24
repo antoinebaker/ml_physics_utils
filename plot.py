@@ -54,10 +54,11 @@ def vega_plot(data, x, y,
     chart = chart.encode(
         x=alt.X(x + ":Q", scale=x_scale),
         y=alt.Y(y + ":Q", scale=y_scale),
-        color=color + ":N"
     )
     if vega_filter:
         chart = chart.transform_filter(vega_filter)
+    if color:
+        chart = chart.encode(color=color + ":N")
     if column:
         chart = chart.encode(column=column + ":O")
     if row:

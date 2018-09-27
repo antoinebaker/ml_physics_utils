@@ -119,7 +119,7 @@ class TableTask(Task):
         super().run_batch(batch, n_batch, result_handler, on_progress)
 
 
-def teacher_student_scenario(n_samples, teacher, student, return_all=False):
+def teacher_student_scenario(n_samples, teacher, student, return_all=False, n_test=1000):
     """Run teacher-student scenario."""
     tic = time.time()
     # teacher generate training data
@@ -127,7 +127,6 @@ def teacher_student_scenario(n_samples, teacher, student, return_all=False):
     # student fits model
     student.fit(X_train, y_train)
     # teacher generate test data
-    n_test = 1000
     X_test, y_test = teacher.generate_data(n_test)
     # train and test scores
     score_train = student.score(X_train, y_train)

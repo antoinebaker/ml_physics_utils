@@ -62,5 +62,5 @@ def vega_plot(data, x, y,
     if column:
         chart = chart.encode(column=column + ":O")
     if row:
-        chart = chart.e
+        chart = chart.encode(row=row + ":O")
     return chart

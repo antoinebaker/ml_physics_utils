@@ -32,8 +32,8 @@ def run_multiple_experiments(experiments, run, result_handler, on_progress=None)
             result = run(**experiment)
             record.update(result)
             result_handler.add_record(record)
-        except Exception:
-            logging.exception(f"Experiment {experiment} failed")
+        except Exception as e:
+            logging.error(f"Experiment {experiment} failed\n{e}")
         on_progress(idx + 1, nb_experiments)
 
 

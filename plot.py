@@ -133,7 +133,6 @@ def qplot(data, x, y,
         ax = axs[instruction["row"], instruction["column"]]
         # plot ax
         if y_multiple:
-            print("y_multipl mode")
             # iterate over y
             for i, (y_var, y_marker) in enumerate(zip(y, y_markers)):
                 # set label
@@ -154,7 +153,6 @@ def qplot(data, x, y,
                     df[x], df[y_var], **instruction["options"], label=label
                 )
         else:
-            print("not y_multiple mode")
             # set label
             if y_legend:
                 label = instruction["label"] + " " + y
